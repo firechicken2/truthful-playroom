@@ -116,7 +116,7 @@ class box{
     display(){
         if(this.InDisplayTime){
             fill(255);
-            rect(this.x,this.y,this.boxSize,this.boxSize);
+            //rect(this.x,this.y,this.boxSize,this.boxSize);
             if(this.targetRed){
                 fill(255,0,0);
             }else{
@@ -151,12 +151,22 @@ class box{
     reset(){
         this.x = this.pastX;
         this.y = this.pastY;
+        //reset reset count
+        this.resetTimeCount = 0;
+        this.InDisplayTime = true;
     }
 }
-
+let lastTargetBox;
 function targetBoxSetter(){
-    let _target = round(random(0,boxes.length));
-    boxes[_target].targetRed = true;
+    //avoid the same target as last time
+    for(let i =0;i<99;i++){
+        let _target = round(random(0,boxes.length-1));
+        while(boxes[_target] != lastTargetBox){
+            boxes[_target].targetRed = true;
+            return boxes[_target];
+        }
+        console.log("same Target");
+    }
 }
 
 let testTwoBall = new two_ball('tb1', 200, 200); 
@@ -169,19 +179,19 @@ function setup(){
     ellipseMode(CENTER);
     angleMode(DEGREES);
 
-    for(let i =0;i<4;i++){
-        for(let j = 0;j<4;j++){
+    for(let i =0;i<6;i++){
+        for(let j = 0;j<6;j++){
             let _box = new box(i+j*4, boxSize*i, boxSize*j); 
             boxes.push(_box);  
         }
     }
-
     targetBoxSetter();
 }
 
 function draw(){
     background(240);
-    translate(200,200);
+    //400-50*6+50/2
+    translate(75,90);
     
     for(let i=0;i<boxes.length;i++){
         boxes[i].display();
@@ -212,11 +222,16 @@ function judge(){
 
     //pass or fail
     if(_dMin <= passport ){
+        //pass to next box
         passProcess(_closestBox);
+        //chech the box is the target or not
         checkBoxTarget(_closestBox);
         // hitLevelCount(_dMin);
     }else{
         testTwoBall.reset();
+        for(let i=0;i<boxes.length;i++){
+            boxes[i].reset();
+        }
         console.log("_closestBox name");
         console.log(_closestBox.name);
         console.log("nope");
@@ -260,7 +275,15 @@ function closestBoxGet(_ballTurn){
   
 function checkBoxTarget(_clzBox){
     if(_clzBox.targetRed == true){
+        //the target box mission complete
         _clzBox.targetRed = false;
+        //avoid the same target as last time
+        lastTargetBox = _clzBox;
+        //hit the target then reset all boxes
+        for(let i=0;i<boxes.length;i++){
+            boxes[i].reset();
+        }
+        //set the new target box
         targetBoxSetter();
     }
 }
