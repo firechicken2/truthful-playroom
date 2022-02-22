@@ -24,6 +24,7 @@ class two_ball{
 
     display(){
         this.run();
+        fill(255);
         //ball 1 
         ellipse(this.x1,this.y1,this.r);
         //ball 2
@@ -107,13 +108,21 @@ class box{
         this.resetTime = 100;
         this.resetTimeCount = 0;
         this.InDisplayTime = true;
+        this.targetRed = false;
 
         this.boxSize = boxSize*0.93;
     }
 
     display(){
         if(this.InDisplayTime){
+            fill(255);
             rect(this.x,this.y,this.boxSize,this.boxSize);
+            if(this.targetRed){
+                fill(255,0,0);
+            }else{
+                fill(255);
+            }
+            ellipse(this.x,this.y,this.boxSize*0.9,this.boxSize*0.9);
         }else{
             this.clickResetCounter();
         }
@@ -145,6 +154,11 @@ class box{
     }
 }
 
+function targetBoxSetter(){
+    let _target = round(random(0,boxes.length));
+    boxes[_target].targetRed = true;
+}
+
 let testTwoBall = new two_ball('tb1', 200, 200); 
 let boxes = [];
 
@@ -161,6 +175,8 @@ function setup(){
             boxes.push(_box);  
         }
     }
+
+    targetBoxSetter();
 }
 
 function draw(){
@@ -197,6 +213,7 @@ function judge(){
     //pass or fail
     if(_dMin <= passport ){
         passProcess(_closestBox);
+        checkBoxTarget(_closestBox);
         // hitLevelCount(_dMin);
     }else{
         testTwoBall.reset();
@@ -241,20 +258,9 @@ function closestBoxGet(_ballTurn){
       };
 }
   
-function hitLevelCount(_hit){
-    let _result =1;
-    if(_hit >= socreLow){
-        _result = rareScore;
-    }else if( socreHigh < _hit && _hit < socreLow){
-        _result = epicScore;
-    }else if(0 <_hit && _hit <= socreHigh){
-        _result = legendScore;
-    }else if(_hit == -1){
-        //
-        _result = -1;
-    }else if(_hit == 0){
-        //
-        _result = 0;
+function checkBoxTarget(_clzBox){
+    if(_clzBox.targetRed == true){
+        _clzBox.targetRed = false;
+        targetBoxSetter();
     }
-    return _result;
 }
