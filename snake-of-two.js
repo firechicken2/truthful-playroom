@@ -2,12 +2,15 @@ let ballTwoRun = true;
 let ballSize = 30;
 let boxSize = 50;
 
+let scoreCount = 0;
+let stepCount = 0;
+
 class two_ball{
     constructor(name, pos_x, pos_y) {
         this.name = name;
         this.r = ballSize;
         this.boxR = boxSize;
-        this.rotSpeed = 3;
+        this.rotSpeed = 4.5;
 
         this.x1 = 0;
         this.y1 = 0;
@@ -24,7 +27,9 @@ class two_ball{
 
     display(){
         this.run();
-        fill(255);
+        // noStroke();
+        stroke(0);
+        fill(240);
         //ball 1 
         ellipse(this.x1,this.y1,this.r);
         //ball 2
@@ -105,7 +110,7 @@ class box{
         this.y = pos_y;
         this.pastX = pos_x;
         this.pastY = pos_y;
-        this.resetTime = 100;
+        this.resetTime = 1;
         this.resetTimeCount = 0;
         this.InDisplayTime = true;
         this.targetRed = false;
@@ -117,6 +122,7 @@ class box{
         if(this.InDisplayTime){
             fill(255);
             //rect(this.x,this.y,this.boxSize,this.boxSize);
+            noStroke();
             if(this.targetRed){
                 fill(255,0,0);
             }else{
@@ -124,7 +130,7 @@ class box{
             }
             ellipse(this.x,this.y,this.boxSize*0.9,this.boxSize*0.9);
         }else{
-            this.clickResetCounter();
+            //this.clickResetCounter();
         }
         // text(this.name,this.x,this.y);
     }
@@ -135,7 +141,7 @@ class box{
         //out of canvas
         this.x = -300;
         this.y = -300;
-        this.resetTimeCount = this.resetTime;
+        this.resetTimeCount = this.resetTime ;
         this.InDisplayTime = false;
     }
 
@@ -190,6 +196,11 @@ function setup(){
 
 function draw(){
     background(240);
+    fill(0);
+    noStroke();
+    textAlign(CENTER);
+    text(scoreCount,width/2,30);
+
     //400-50*6+50/2
     translate(75,90);
     
@@ -197,23 +208,58 @@ function draw(){
         boxes[i].display();
     }
     testTwoBall.display();
+
+    translate(-75,-90);
+    youAreGooud();
 }
 
+let reStart = false;
 
-function mouseClicked() {
-    // ballTwoRun = !ballTwoRun;
-    // judge();
+function youAreGooud(){
+    if(reStart){
+      textStyle(BOLD);
+      noStroke();
+      textSize(72);
+      fill(frameCount*3%255,frameCount*3%512,frameCount*3%765);
+      text("打 的 不 錯", width/2,250);
+      textSize(15);
+      fill(204);
+      text("click to restart", width/2,295);
+    }
+  }
+
+function  mousePressed (event )  { 
+    if  ( event.type  ==  'mousedown' ){
+        // click action 
+        if(reStart){
+            reStart = false;
+        }else{
+            ballTwoRun = !ballTwoRun;
+            judge();
+            stepCount += 1;
+            console.log(stepCount);
+        }
+    }else{
+
+    }
 }
-function mousePressed() {
-    ballTwoRun = !ballTwoRun;
-    judge();
-}
+
   function keyPressed() {
-    ballTwoRun = !ballTwoRun;
-    judge();
+    if(reStart){
+        reStart = false;
+    }else{
+        ballTwoRun = !ballTwoRun;
+        judge();
+        stepCount += 1;
+        console.log(stepCount);
+    }
 }
 
 function judge(){
+    for(let i=0;i<boxes.length;i++){
+        boxes[i].clickResetCounter();
+    }
+
     // hit Accuracy Count
     let _closestBoxResult = closestBoxGet(ballTwoRun);
     let _closestBox = _closestBoxResult.box;
@@ -228,13 +274,15 @@ function judge(){
         checkBoxTarget(_closestBox);
         // hitLevelCount(_dMin);
     }else{
+        //fail
         testTwoBall.reset();
         for(let i=0;i<boxes.length;i++){
             boxes[i].reset();
         }
-        console.log("_closestBox name");
-        console.log(_closestBox.name);
         console.log("nope");
+        if(stepCount>1){ reStart = true;}
+        stepCount = 0;
+        scoreCount = 0;
     }
 }
 
@@ -245,7 +293,7 @@ function passProcess(_clzBox){
 }
 
 //range 1~4
-let passport = 9;
+let passport = 15;
 let socreHigh = 1.5;
 let socreLow = 2.4;
 
@@ -281,9 +329,12 @@ function checkBoxTarget(_clzBox){
         lastTargetBox = _clzBox;
         //hit the target then reset all boxes
         for(let i=0;i<boxes.length;i++){
+            boxes[i].resetTime += 1;
             boxes[i].reset();
         }
         //set the new target box
         targetBoxSetter();
+        //score update
+        scoreCount += 10;
     }
 }
