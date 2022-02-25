@@ -141,7 +141,7 @@ class box{
         //out of canvas
         this.x = -300;
         this.y = -300;
-        this.resetTimeCount = this.resetTime ;
+        this.resetTimeCount = this.resetTime + scoreCount ;
         this.InDisplayTime = false;
     }
 
@@ -167,7 +167,7 @@ function targetBoxSetter(){
     //avoid the same target as last time
     for(let i =0;i<99;i++){
         let _target = round(random(0,boxes.length-1));
-        while(boxes[_target] != lastTargetBox){
+        while(boxes[_target] != lastTargetBox && boxes[_target].name != 0){
             boxes[_target].targetRed = true;
             return boxes[_target];
         }
@@ -199,7 +199,7 @@ function draw(){
     fill(0);
     noStroke();
     textAlign(CENTER);
-    text(scoreCount,width/2,30);
+    text(scoreCount*10,width/2,30);
 
     //400-50*6+50/2
     translate(75,90);
@@ -228,31 +228,29 @@ function youAreGooud(){
     }
   }
 
-function  mousePressed (event )  { 
-    if  ( event.type  ==  'mousedown' ){
-        // click action 
-        if(reStart){
-            reStart = false;
-        }else{
-            ballTwoRun = !ballTwoRun;
-            judge();
-            stepCount += 1;
-            console.log(stepCount);
-        }
-    }else{
-
-    }
-}
-
-  function keyPressed() {
+function pressProcess(){
     if(reStart){
         reStart = false;
+        failProcess();
     }else{
         ballTwoRun = !ballTwoRun;
         judge();
         stepCount += 1;
         console.log(stepCount);
     }
+}
+
+function  mousePressed (event )  {
+    //in p5 js mobile touch event got two retrun : mousedown and touchstart
+    // use mousedown for both mobile and pc work but hack 
+    if  ( event.type  ==  'mousedown' ){
+        // click action 
+        pressProcess();
+    }
+}
+
+  function keyPressed() {
+    pressProcess();
 }
 
 function judge(){
@@ -275,14 +273,12 @@ function judge(){
         // hitLevelCount(_dMin);
     }else{
         //fail
-        testTwoBall.reset();
-        for(let i=0;i<boxes.length;i++){
-            boxes[i].reset();
-        }
         console.log("nope");
-        if(stepCount>1){ reStart = true;}
-        stepCount = 0;
-        scoreCount = 0;
+        if(stepCount>1){ 
+            reStart = true;
+        }else{
+            failProcess();
+        }
     }
 }
 
@@ -290,6 +286,15 @@ function passProcess(_clzBox){
     testTwoBall.adjust(_clzBox);
     testTwoBall.clicked();
     // _clzBox.clicked();
+}
+
+function failProcess(){
+    testTwoBall.reset();
+    for(let i=0;i<boxes.length;i++){
+        boxes[i].reset();
+    }
+    stepCount = 0;
+    scoreCount = 0;
 }
 
 //range 1~4
@@ -329,12 +334,11 @@ function checkBoxTarget(_clzBox){
         lastTargetBox = _clzBox;
         //hit the target then reset all boxes
         for(let i=0;i<boxes.length;i++){
-            boxes[i].resetTime += 1;
             boxes[i].reset();
         }
         //set the new target box
         targetBoxSetter();
         //score update
-        scoreCount += 10;
+        scoreCount += 1;
     }
 }
