@@ -1,8 +1,10 @@
 let ballTwoRun = true;
 let ballSize = 30;
 let boxSize = 50;
+let waitState = true;
 
 let scoreCount = 0;
+let scoreBonus = 0;
 let stepCount = 0;
 
 class two_ball{
@@ -21,43 +23,47 @@ class two_ball{
 
         this.angle1 = 0 ;
         this.angle2 = 0 ;
+        this.angleCount = 0;
+        this.rotSpeedAdd = 0;
 
         this.lastBallTwoRun = ballTwoRun;
     }
 
     display(){
         this.run();
-        // noStroke();
+        
         stroke(0);
-        fill(240);
-        //ball 1 
+        fill(bg);
+        // //ball 1 
         ellipse(this.x1,this.y1,this.r);
         //ball 2
         ellipse(this.x2,this.y2,this.r);
-        // text(this.angle2%360,this.x2,this.y2);
     }
 
     run(){
         // calculate the relate angle and reset the this.angle to start new rotate at right position
         if(this.lastBallTwoRun != ballTwoRun){
+            this.angleCount = 0;
             this.angle1 = this.angleReset(this.x1,this.y1,this.x2,this.y2);
             this.angle2 = this.angleReset(this.x2,this.y2,this.x1,this.y1);
             this.lastBallTwoRun = ballTwoRun;
         }
         // rotate process
         if(ballTwoRun){
-            this.angle2 = (this.angle2 + this.rotSpeed)%360;
+            this.angleCount += this.rotSpeed + this.rotSpeedAdd;
+            let _a = (this.angle2 + this.angleCount)%360;
             this.rotX = this.x1;
             this.rotY = this.y1;
-            this.x2 = this.rotX + this.boxR * cos(this.angle2); 
-            this.y2 = this.rotY + this.boxR * sin(this.angle2);
+            this.x2 = this.rotX + this.boxR * cos(_a); 
+            this.y2 = this.rotY + this.boxR * sin(_a);
             
         }else{
-            this.angle1 = (this.angle1 + this.rotSpeed)%360;
+            this.angleCount += this.rotSpeed + this.rotSpeedAdd;
+            let _a = (this.angle1 + this.angleCount)%360;
             this.rotX = this.x2;
             this.rotY = this.y2;
-            this.x1 = this.rotX + this.boxR * cos(this.angle1); 
-            this.y1 = this.rotY + this.boxR * sin(this.angle1);
+            this.x1 = this.rotX + this.boxR * cos(_a); 
+            this.y1 = this.rotY + this.boxR * sin(_a);
         }       
     }
 
@@ -99,6 +105,9 @@ class two_ball{
 
         this.angle1 = 0 ;
         this.angle2 = 0 ;
+        this.angleCount = 0;
+        this.rotSpeedAdd = 0;
+
         ballTwoRun = true;
     }
 }
@@ -113,7 +122,7 @@ class box{
         this.resetTime = 1;
         this.resetTimeCount = 0;
         this.InDisplayTime = true;
-        this.targetRed = false;
+        this.target = 0;
 
         this.boxSize = boxSize*0.93;
     }
@@ -123,8 +132,12 @@ class box{
             fill(255);
             //rect(this.x,this.y,this.boxSize,this.boxSize);
             noStroke();
-            if(this.targetRed){
-                fill(255,0,0);
+            if(this.target == 1){
+                fill(240,70,100);
+            }else if(this.target == 2){
+                fill(120,150,240);
+            }else if(this.target == 3){
+                fill(100,200,150);
             }else{
                 fill(255);
             }
@@ -141,6 +154,7 @@ class box{
         //out of canvas
         this.x = -300;
         this.y = -300;
+        this.target = 0;
         this.resetTimeCount = this.resetTime + scoreCount ;
         this.InDisplayTime = false;
     }
@@ -148,10 +162,12 @@ class box{
     clickResetCounter(){
         if(this.resetTimeCount > 0){
             this.resetTimeCount -= 1;
-        }else{
-            this.reset();
-            this.InDisplayTime = true;
+            if(this.resetTimeCount == 0){
+                this.reset();
+                this.InDisplayTime = true;
+            }
         }
+        
     }
 
     reset(){
@@ -161,14 +177,27 @@ class box{
         this.resetTimeCount = 0;
         this.InDisplayTime = true;
     }
+
+    targetFastSlowBoxSetter(){
+        this.target = 0;
+        let _r = random(0,100);
+        if(_r <5){
+            this.target = 2;
+        }else if(_r > 95){
+            this.target = 3;
+        }
+        
+    }
 }
 let lastTargetBox;
 function targetBoxSetter(){
     //avoid the same target as last time
     for(let i =0;i<99;i++){
         let _target = round(random(0,boxes.length-1));
-        while(boxes[_target] != lastTargetBox && boxes[_target].name != 0){
-            boxes[_target].targetRed = true;
+        //boxes[_target] != lastTargetBox  :: change the target not same as last time
+        //boxes[_target].name != 0 :: the first box for reborn twoball 
+        while(boxes[_target] != lastTargetBox && boxes[_target].name != 0 && boxes[_target].InDisplayTime == true){
+            boxes[_target].target = 1;
             return boxes[_target];
         }
         console.log("same Target");
@@ -177,9 +206,11 @@ function targetBoxSetter(){
 
 let testTwoBall = new two_ball('tb1', 200, 200); 
 let boxes = [];
+let bg;
 
 function setup(){
     createCanvas(400, 500);
+    bg = color(240);
 
     rectMode(CENTER);
     ellipseMode(CENTER);
@@ -188,6 +219,7 @@ function setup(){
     for(let i =0;i<6;i++){
         for(let j = 0;j<6;j++){
             let _box = new box(i+j*4, boxSize*i, boxSize*j); 
+            _box.targetFastSlowBoxSetter();
             boxes.push(_box);  
         }
     }
@@ -196,21 +228,30 @@ function setup(){
 
 function draw(){
     background(240);
+    //score
     fill(0);
     noStroke();
     textAlign(CENTER);
-    text(scoreCount*10,width/2,30);
+    text(scoreCount*10 + scoreBonus*2,width/2,30);
 
+    //box array and ball
     //400-50*6+50/2
     translate(75,90);
-    
     for(let i=0;i<boxes.length;i++){
         boxes[i].display();
     }
     testTwoBall.display();
 
+    //talk shit
     translate(-75,-90);
     youAreGooud();
+
+    //show waitstate
+    lifeProcess();
+    if(waitState){
+        fill(255);
+        rect(width/2,45,10,10);
+    }
 }
 
 let reStart = false;
@@ -230,9 +271,11 @@ function youAreGooud(){
 
 function pressProcess(){
     if(reStart){
+        waitState = true;
         reStart = false;
         failProcess();
     }else{
+        waitState = false;
         ballTwoRun = !ballTwoRun;
         judge();
         stepCount += 1;
@@ -292,9 +335,37 @@ function failProcess(){
     testTwoBall.reset();
     for(let i=0;i<boxes.length;i++){
         boxes[i].reset();
+        boxes[i].targetFastSlowBoxSetter();
     }
+    targetBoxSetter();
     stepCount = 0;
     scoreCount = 0;
+    scoreBonus = 0;
+    console.log("fail");
+}
+
+let life = 3;
+let lastAngleCount =0;
+function lifeProcess(){       
+    if(!waitState){
+        if(testTwoBall.angleCount%360 < 10 && lastAngleCount > 350){
+            life -= 1;
+            console.log(testTwoBall.angleCount%360,lastAngleCount,"damage");
+        }
+
+        lastAngleCount = testTwoBall.angleCount%360;
+    }
+    
+
+    if(life == 3){
+        bg = color(240);
+    }else if(life == 2){
+        bg = color(160);
+    }else if(life == 1){
+        bg = color(80);
+    }else if(life == 0){
+        bg = color(0);
+    }
 }
 
 //range 1~4
@@ -327,18 +398,27 @@ function closestBoxGet(_ballTurn){
 }
   
 function checkBoxTarget(_clzBox){
-    if(_clzBox.targetRed == true){
+    if(_clzBox.target == 1){
         //the target box mission complete
-        _clzBox.targetRed = false;
+        _clzBox.target = 0;
         //avoid the same target as last time
         lastTargetBox = _clzBox;
         //hit the target then reset all boxes
         for(let i=0;i<boxes.length;i++){
-            boxes[i].reset();
+            //boxes[i].reset();
+            boxes[i].targetFastSlowBoxSetter();
         }
         //set the new target box
         targetBoxSetter();
         //score update
         scoreCount += 1;
+        //can wait
+        waitState = true;
+    }else if(_clzBox.target == 2){
+        testTwoBall.rotSpeedAdd += 0.5;
+        scoreBonus += 1;
+    }else if(_clzBox.target == 3){
+        testTwoBall.rotSpeedAdd += -0.5;
+        scoreBonus += 1;
     }
 }
