@@ -254,7 +254,7 @@ function draw(){
     youAreGooud();
     fill(204);
     textSize(12);
-    teztStyle(NORMAL);
+    textStyle(NORMAL);
     noStroke();
     text("v22022701",width/2, height-24);
 }
