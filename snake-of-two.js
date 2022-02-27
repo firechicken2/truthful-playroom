@@ -12,7 +12,7 @@ class two_ball{
         this.name = name;
         this.r = ballSize;
         this.boxR = boxSize;
-        this.rotSpeed = 4.5;
+        this.rotSpeed = 3;
 
         this.x1 = 0;
         this.y1 = 0;
@@ -25,6 +25,8 @@ class two_ball{
         this.angle2 = 0 ;
         this.angleCount = 0;
         this.rotSpeedAdd = 0;
+        this.speedBoxCount = 0;
+        this.slowBoxCount = 0;
 
         this.lastBallTwoRun = ballTwoRun;
     }
@@ -34,10 +36,11 @@ class two_ball{
         
         stroke(0);
         fill(bg);
-        // //ball 1 
+        //ball 1 
         ellipse(this.x1,this.y1,this.r);
         //ball 2
         ellipse(this.x2,this.y2,this.r);
+
     }
 
     run(){
@@ -50,7 +53,7 @@ class two_ball{
         }
         // rotate process
         if(ballTwoRun){
-            this.angleCount += this.rotSpeed + this.rotSpeedAdd;
+            this.angleCount += (this.speedBoxCount >= 0 ) ? this.rotSpeed * (1 + this.rotSpeedAdd*1.0) : this.rotSpeed * (1 - this.rotSpeedAdd*1.0) ;
             let _a = (this.angle2 + this.angleCount)%360;
             this.rotX = this.x1;
             this.rotY = this.y1;
@@ -58,7 +61,7 @@ class two_ball{
             this.y2 = this.rotY + this.boxR * sin(_a);
             
         }else{
-            this.angleCount += this.rotSpeed + this.rotSpeedAdd;
+            this.angleCount += (this.speedBoxCount >= 0 ) ? this.rotSpeed * (1 + this.rotSpeedAdd*1.0) : this.rotSpeed * (1 - this.rotSpeedAdd*1.0) ;
             let _a = (this.angle1 + this.angleCount)%360;
             this.rotX = this.x2;
             this.rotY = this.y2;
@@ -107,6 +110,8 @@ class two_ball{
         this.angle2 = 0 ;
         this.angleCount = 0;
         this.rotSpeedAdd = 0;
+        this.speedBoxCount = 0;
+        this.slowBoxCount = 0;
 
         ballTwoRun = true;
     }
@@ -181,9 +186,9 @@ class box{
     targetFastSlowBoxSetter(){
         this.target = 0;
         let _r = random(0,100);
-        if(_r <5){
+        if(_r < scoreCount){
             this.target = 2;
-        }else if(_r > 95){
+        }else if(_r > 100-scoreCount){
             this.target = 3;
         }
         
@@ -224,6 +229,7 @@ function setup(){
         }
     }
     targetBoxSetter();
+    copyState();
 }
 
 function draw(){
@@ -247,11 +253,28 @@ function draw(){
     youAreGooud();
 
     //show waitstate
-    lifeProcess();
+    // lifeProcess();
+    youMustGo();
     if(waitState){
-        fill(255);
-        rect(width/2,45,10,10);
+        fill(0);
+        textSize(12);
+        textStyle(NORMAL);
+        noStroke();
+        text("READY",width/2, 45);
+    }else{
+        fill(0);
+        textSize(12);
+        textStyle(NORMAL);
+        noStroke();
+        text("GO",width/2, 45);
     }
+
+    //update version
+    fill(204);
+    textSize(12);
+    textStyle(NORMAL);
+    noStroke();
+    text("v22022701",width/2, height-24);
 }
 
 let reStart = false;
@@ -312,8 +335,9 @@ function judge(){
         //pass to next box
         passProcess(_closestBox);
         //chech the box is the target or not
-        checkBoxTarget(_closestBox);
-        // hitLevelCount(_dMin);
+        let _save = checkBoxTarget(_closestBox);
+        // save
+        if(_save){ copyState();}
     }else{
         //fail
         console.log("nope");
@@ -332,44 +356,64 @@ function passProcess(_clzBox){
 }
 
 function failProcess(){
+    stepCount = 0;
+    scoreCount = 0;
+    scoreBonus = 0;
     testTwoBall.reset();
     for(let i=0;i<boxes.length;i++){
         boxes[i].reset();
         boxes[i].targetFastSlowBoxSetter();
     }
     targetBoxSetter();
-    stepCount = 0;
-    scoreCount = 0;
-    scoreBonus = 0;
     console.log("fail");
 }
 
-let life = 3;
-let lastAngleCount =0;
-function lifeProcess(){       
-    if(!waitState){
-        if(testTwoBall.angleCount%360 < 10 && lastAngleCount > 350){
-            life -= 1;
-            console.log(testTwoBall.angleCount%360,lastAngleCount,"damage");
+let boxTemp = [];
+let ballTemp;
+let bonusTemp,stepTemp,ballTwoRunTemp;
+function youMustGo(){       
+    if(!reStart && !waitState){
+        if(testTwoBall.angleCount > 720){
+            waitState = !waitState;
+            ballTwoRun = ballTwoRunTemp;
+            scoreBonus = bonusTemp;
+            stepCount = stepTemp;
+
+            boxes = JSON.parse(JSON.stringify(boxTemp)); // 深層
+            for(let i = 0;i<boxTemp.length;i++){
+                boxes[i].__proto__ = box.prototype;
+            }
+
+            testTwoBall = JSON.parse(JSON.stringify(ballTemp)); // 深層
+            testTwoBall.__proto__ = two_ball.prototype;
+
+            console.log("get back");
         }
-
-        lastAngleCount = testTwoBall.angleCount%360;
-    }
-    
-
-    if(life == 3){
-        bg = color(240);
-    }else if(life == 2){
-        bg = color(160);
-    }else if(life == 1){
-        bg = color(80);
-    }else if(life == 0){
-        bg = color(0);
     }
 }
 
+const clone = (items) => items.map(item => Array.isArray(item) ? clone(item) : item);
+
+function copyState(){
+    ballTwoRunTemp = ballTwoRun;
+    bonusTemp = scoreBonus;
+    stepTemp = stepCount;
+    
+    boxTemp = JSON.parse(JSON.stringify(boxes)); // 深層
+    for(let i = 0;i<boxTemp.length;i++){
+        boxTemp[i].__proto__ = box.prototype;
+    }
+
+    ballTemp = JSON.parse(JSON.stringify(testTwoBall)); // 深層
+    ballTemp.__proto__ = two_ball.prototype;
+    
+    console.log("get copy");
+}
+
+
+
 //range 1~4
-let passport = 15;
+let passport = 18;
 let socreHigh = 1.5;
 let socreLow = 2.4;
 
@@ -414,11 +458,25 @@ function checkBoxTarget(_clzBox){
         scoreCount += 1;
         //can wait
         waitState = true;
+        //
+        return true;
     }else if(_clzBox.target == 2){
-        testTwoBall.rotSpeedAdd += 0.5;
+        testTwoBall.speedBoxCount += 1;
+        testTwoBall.rotSpeedAdd = logChange( 10 , 1+abs(testTwoBall.speedBoxCount));
+        console.log("testTwoBall.rotSpeedAdd");
+        console.log(testTwoBall.rotSpeedAdd);
         scoreBonus += 1;
     }else if(_clzBox.target == 3){
-        testTwoBall.rotSpeedAdd += -0.5;
+        testTwoBall.speedBoxCount -= 1;
+        testTwoBall.rotSpeedAdd = logChange( 10 , 1+abs(testTwoBall.speedBoxCount));
+        console.log("testTwoBall.rotSpeedAdd");
+        console.log(testTwoBall.rotSpeedAdd);
         scoreBonus += 1;
     }
+    return false;
+}
+
+function logChange( _e , _n){
+    let _result = log(_n) / log(_e);
+    return _result;
 }
