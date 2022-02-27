@@ -11,7 +11,7 @@ class two_ball{
         this.name = name;
         this.r = ballSize;
         this.boxR = boxSize;
-        this.rotSpeed = 4.5;
+        this.rotSpeed = 3;
 
         this.x1 = 0;
         this.y1 = 0;
@@ -192,9 +192,9 @@ class box{
     targetFastSlowBoxSetter(){
         this.target = 0;
         let _r = random(0,100);
-        if(_r <5){
+        if(_r < scoreCount){
             this.target = 2;
-        }else if(_r > 95){
+        }else if(_r > 100-scoreCount){
             this.target = 3;
         }
         
@@ -252,6 +252,11 @@ function draw(){
 
     translate(-75,-90);
     youAreGooud();
+    fill(204);
+    textSize(12);
+    teztStyle(NORMAL);
+    noStroke();
+    text("v22022701",width/2, height-24);
 }
 
 let reStart = false;
